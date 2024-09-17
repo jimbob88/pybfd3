@@ -1230,6 +1230,34 @@ pybfd3_section_get_content(PyObject *self, PyObject *args) {
 
 }
 
+static PyObject *
+pybfd3_section_set_content(PyObject *self, PyObject *args) {
+    bfd* abfd;
+    asection* section;
+    PyObject* py_content;
+    unsigned int offset;
+
+    if (!PyArg_ParseTuple(args, "nnOI", &abfd, &section, &py_content, &offset)) {
+        return NULL;
+    }
+
+    bfd_byte* content;
+    Py_ssize_t content_size;
+    if (!PyBytes_Check(py_content)) {
+        PyErr_SetString(PyExc_TypeError, "Content must be bytes");
+        return NULL;
+    }
+    content = PyBytes_AsString(py_content);
+    content_size = PyBytes_Size(py_content);
+
+    if (!bfd_set_section_contents(abfd, section, content, offset, content_size)) {
+        PyErr_SetString(PyExc_RuntimeError, bfd_errmsg(bfd_get_error()));
+        return NULL;
+    }
+
+    Py_RETURN_NONE;
+}
+
 //
 // Name     : pybfd3_get_architecture
 //
@@ -1278,7 +1306,7 @@ initialize(void) {
 //
 // Define methods
 //
-static struct PyMethodDef _bfd_methods[] = { 
+static struct PyMethodDef _bfd_methods[] = {
 #define declmethod(func,h) { #func , ( PyCFunction )pybfd3_##func , METH_VARARGS , h }
     declmethod(openr, "Create a BFD for file reading."),
     declmethod(fdopenr, "Create a BFD for file reading (from file descriptor)."),
@@ -1304,6 +1332,7 @@ static struct PyMethodDef _bfd_methods[] = {
     declmethod(get_gp_size, "Return the maximum size of objects to be optimized using the GP register under ECOFF or MIPS ELF."),
     declmethod(set_gp_size, "Set the maximum size of objects to be optimized using the GP register under ECOFF or MIPS ELF."),
     declmethod(section_get_content, "Return the section specified content."),
+    declmethod(section_set_content, "Update a section with given content."),
     declmethod(get_symbols, "Return the complete list of available symbols."),
     declmethod(get_architecture, "Return the current architecture Id."),
     {NULL},
