@@ -121,6 +121,12 @@ class Bfd(object):
         """Store the native BFD structure pointer."""
         self.__ptr = ptr
 
+    def _open_from_file_descriptor(self, filename, target, file_descriptor):
+        return _bfd.fdopenr(filename, target, file_descriptor)
+
+    def _open_from_file(self, filename, target):
+        return _bfd.openr(filename, target)
+
     def open(self, _file, target=DEFAULT_TARGET):
         """
         Open the existing file for reading.
@@ -146,7 +152,7 @@ class Bfd(object):
                 raise BfdException("Symlinks file-descriptors are not valid")
                     
             try:
-                self._ptr = _bfd.fdopenr(filename, target, dup(_file.fileno()))
+                self._ptr = self._open_from_file_descriptor(filename, target, dup(_file.fileno()))
             except Exception as err:
                 raise BfdException(
                     "Unable to open file-descriptor %s : %s" % (filename, err))
@@ -163,7 +169,8 @@ class Bfd(object):
             # Proceed to open the specified file and create a new BFD.
             #
             try:
-                self._ptr = _bfd.openr(filename, target)
+                self._ptr = self._open_from_file(filename, target)
+                # self._ptr = _bfd.openr(filename, target)
             except (TypeError, IOError) as err:
                 raise BfdException(
                     "Unable to open file %s : %s" % (filename, err))
@@ -731,6 +738,15 @@ class Bfd(object):
         """Return string representation of the current BFD."""
         _str = "I'm a bfd."
         return _str
+
+class WritableBfd(Bfd):
+    """Readable and Writable bfd."""
+    
+    def _open_from_file_descriptor(self, filename, target, file_descriptor):
+        return _bfd.fdopenrw(filename, target, file_descriptor)
+
+    def _open_from_file(self, filename, target):
+        return _bfd.openrw(filename, target)
 
 def main():
 
