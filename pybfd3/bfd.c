@@ -170,6 +170,31 @@ pybfd3_openr(PyObject *self, PyObject *args) {
     return NULL;
 }
 
+static PyObject *
+pybfd3_openw(PyObject *self, PyObject *args) {
+    bfd* abfd;
+
+    const char* filename;
+    const char* target;
+
+    if (PyArg_ParseTuple(args, "ss", &filename, &target)) {
+        abfd = bfd_openw(filename, NULL);
+
+        if (!abfd) {
+            // An error ocurred trying to open the file.
+            PyErr_SetString(PyExc_IOError, bfd_errmsg(bfd_get_error()));
+        }
+        else {
+            return Py_BuildValue("n", abfd);
+        }
+    }
+    else {
+        PyErr_SetString(PyExc_TypeError, "Invalid parameter(s)");
+    }
+
+    return NULL;
+}
+
 //
 // Name     : pybfd3_fdopenr
 //
@@ -1309,6 +1334,7 @@ initialize(void) {
 static struct PyMethodDef _bfd_methods[] = {
 #define declmethod(func,h) { #func , ( PyCFunction )pybfd3_##func , METH_VARARGS , h }
     declmethod(openr, "Create a BFD for file reading."),
+    declmethod(openw, "Create a BFD for file reading and writing."),
     declmethod(fdopenr, "Create a BFD for file reading (from file descriptor)."),
     declmethod(check_format, "Initialize the file format of the BFD."),
     declmethod(check_format_matches, "Initialize the file format of the BFD and return list of matches if ambiguous format exists."),
