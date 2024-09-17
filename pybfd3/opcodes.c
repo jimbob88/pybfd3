@@ -471,8 +471,11 @@ start_smart_disassemble(disassembler_pointer* pdisasm_ptr, unsigned long offset,
         offset += n; // update the offset for the next disassemble operation.
         disassembled_bytes += n;    // keep track of the number of bytes
                                     // processed.
-
-        py_result = PyEval_CallObject(callback, py_args);
+        #if PY_VERSION_HEX >= 0x03090000
+            py_result = PyObject_Call(callback, py_args, NULL);
+        #else
+            py_result = PyEval_CallObject(callback, py_args);
+        #endif
         Py_XDECREF(py_args);
 
         if (!py_result) {
