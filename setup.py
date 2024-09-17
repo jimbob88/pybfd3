@@ -238,7 +238,7 @@ class CustomBuildExtension( build_ext ):
         print("[+] Testing for init_disassemble_info...")
         try:
             objects = self.compiler.compile(
-                [os.path.join(PACKAGE_DIR, "init_disassemble_info.c"), ],
+                [os.path.join(PACKAGE_DIR, "test_init_disassemble_info.c"), ],
                 include_dirs = [self.includes,],
             )
             if len(objects) == 0:
