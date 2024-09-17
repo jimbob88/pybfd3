@@ -95,6 +95,17 @@ get_disassemble_function(   unsigned long long ull_arch,
     return (disassembler_ftype)NULL;
 }
 
+#ifdef PYBFD3_LIBBFD_INIT_DISASM_INFO_FOUR_ARGS_SIGNATURE
+// bpftrace no operation fprintf for init_disassemble_info
+static int fprintf_styled_nop(void *out __attribute__((unused)),
+                              enum disassembler_style s __attribute__((unused)),
+                              const char *fmt __attribute__((unused)),
+                              ...)
+{
+  return 0;
+}
+#endif
+
 //
 // Name     : initialize_opcodes
 //
@@ -123,8 +134,13 @@ initialize_opcodes()
     memset(pdisasm_ptr, 0, sizeof(disassembler_pointer));
 
     // Zero out structure members
-    init_disassemble_info(&pdisasm_ptr->dinfo, &pdisasm_ptr->sfile, 
-        (fprintf_ftype)__disassemle_printf);
+    #ifdef PYBFD3_LIBBFD_INIT_DISASM_INFO_FOUR_ARGS_SIGNATURE
+        init_disassemble_info(&pdisasm_ptr->dinfo, &pdisasm_ptr->sfile,
+            (fprintf_ftype)__disassemle_printf, fprintf_styled_nop);
+    #else
+        init_disassemble_info(&pdisasm_ptr->dinfo, &pdisasm_ptr->sfile,
+                    (fprintf_ftype)__disassemle_printf);
+    #endif
 
 
     pdisasm_ptr->pfn_disassemble = NULL;
